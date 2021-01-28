@@ -9,9 +9,9 @@ def resolution(width, height):
 
 cap = cv2.VideoCapture(0)
 
-resolution(1280, 720)
+resolution(800, 400)
 Font_Org = (5, 35)
-Font_scale = 1.5
+Font_scale = 1.2
 Font = cv2.FONT_HERSHEY_SIMPLEX
 Font_thickness = 2
 
@@ -31,7 +31,7 @@ while True:
     frame = aruco.drawDetectedMarkers(frame, corners, ids)
 
     currentMarkers = len(corners)
-    cv2.putText(frame, str(currentMarkers), (1220, 50), Font,
+    cv2.putText(frame, str(currentMarkers), (750, 50), Font,
                 Font_scale, (0, 0, 255), Font_thickness, cv2.LINE_AA)
 
     if currentMarkers == 9 and previousMarkers < 9:
