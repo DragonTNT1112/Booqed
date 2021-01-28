@@ -153,9 +153,11 @@ class Qubic:
 
                 cv2.putText(real_frame, 'Pod Status: Occupied', Obj_Font_Org, Font,
                             Font_scale, (0, 0, 255), Font_thickness, cv2.LINE_AA)
+                Obj_Status = True
             else:
-                cv2.putText(real_frame, 'Pod Status: Vacant', Obj_Font_Org, Font,
+                cv2.putText(real_frame, 'Pod Status: Empty', Obj_Font_Org, Font,
                             Font_scale, (0, 255, 0), Font_thickness, cv2.LINE_AA)
+                Obj_Status = False
 
             if avg is None:
                 avg = current_frame.copy().astype("float")
@@ -176,9 +178,11 @@ class Qubic:
 
                 cv2.putText(real_frame, 'Motion Detected', Mot_Font_Org, Font,
                             Font_scale, (0, 0, 255), Font_thickness, cv2.LINE_AA)
+                Mot_Status = True
             else:
                 cv2.putText(real_frame, 'No Motion Detected', Mot_Font_Org, Font,
                             Font_scale, (0, 255, 0), Font_thickness, cv2.LINE_AA)
+                Mot_Status = False
 
             cv2.imshow('Obj_Threshold', Obj_threshold)
             cv2.imshow('Mot_Threshold', Mot_threshold)
