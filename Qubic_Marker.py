@@ -140,6 +140,8 @@ class Qubic:
         mqtt_start_time = datetime.now()
         mark_time = datetime.now()
 
+        client.publish("Pod ID", self.qubic_id)
+
         while True:
             ret, real_frame = cap.read()
             current_frame = cv2.cvtColor(real_frame, cv2.COLOR_BGR2GRAY)
