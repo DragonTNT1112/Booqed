@@ -1,11 +1,11 @@
-import numpy as np
+from datetime import datetime
+
 import cv2
 import cv2.aruco as aruco
-from datetime import datetime
+import numpy as np
 import paho.mqtt.client as mqtt
-import time
 
-mqttBroker ="test.mosquitto.org"
+mqttBroker = "test.mosquitto.org"
 
 client = mqtt.Client("Temperature_Inside")
 client.connect(mqttBroker)
@@ -21,6 +21,7 @@ Font_thickness = 2
 
 aruco_dict = aruco.Dictionary_get(aruco.DICT_4X4_50)
 arucoParameters = aruco.DetectorParameters_create()
+
 
 class Qubic:
     def __init__(self, id, in_time, out_time):
@@ -216,13 +217,12 @@ class Qubic:
                 color = (0, 0, 255)
             else:
                 color = (0, 255, 0)
-            cv2.putText(real_frame, 'Pod Status: ' + Pod_Status, (5,430), Font,
+            cv2.putText(real_frame, 'Pod Status: ' + Pod_Status, (5, 430), Font,
                         Font_scale, color, Font_thickness, cv2.LINE_AA)
 
             cv2.imshow('Obj_Threshold', Obj_threshold)
             cv2.imshow('Mot_Threshold', Mot_threshold)
             cv2.imshow('Display', real_frame)
-
 
             mqtt_current_time = datetime.now()
             if (mqtt_current_time - mqtt_start_time).seconds >= 5:
@@ -231,15 +231,8 @@ class Qubic:
                 mqtt_start_time = datetime.now()
 
             if cv2.waitKey(1) & thread_switch == False:
-                client.publish("Overall Status", "{}|{}|{}|{}".format(self.qubic_id, None, None, "User Cheked Out"))
+                client.publish("Overall Status", "{}|{}|{}|{}".format(self.qubic_id, None, None, "User Checked Out"))
                 break
 
         cap.release()
         cv2.destroyAllWindows()
-
-
-Pod = Qubic(205, "2021-01-26 10:00:00", "2021-01-26 11:00:00")
-current_time = datetime.now().time()
-# Pod.Check_In(current_time)
-# Pod.Check_Out(current_time)
-Pod.User_Detection()
