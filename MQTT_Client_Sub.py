@@ -20,7 +20,7 @@ def on_message(client, userdata, message):
     Pod_Status = message_list[3]
     print()
     print("Time: ", str(current_time)[:-7])
-    print("ID:", str(Pod_id))
+    print("Pod ID:", str(Pod_id))
     print("Obj Status:", Obj_Status)
     print("Mot Status:", Mot_Status)
     print("Pod Status:", Pod_Status)
@@ -44,7 +44,7 @@ def image_message(client, userdata, msg):
     current_time = datetime.now()
     date_folder = str(current_time.date())
 
-    path = r"C:\Users\zzh84\PycharmProjects\MotionDetection\Received_images\{}\{}".format(Pod_id, date_folder)
+    path = r"C:\Users\zzhu827\PycharmProjects\Booqed-updated\Received_images\{}\{}".format(Pod_id, date_folder)
 
     if not os.path.exists(path):
         os.makedirs(path)
@@ -65,13 +65,16 @@ mqttBroker = "test.mosquitto.org"
 client1 = mqtt.Client("Smartphone")
 client2 = mqtt.Client("ID tracker")
 client3 = mqtt.Client("Image")
+
 client1.connect(mqttBroker)
 client2.connect(mqttBroker)
+client3.connect(mqttBroker, 1883, 60)
 
 client1.loop_start()
 client2.loop_start()
 client3.loop_start()
-client3.connect(mqttBroker, 1883, 60)
+
+
 client3.on_connect = on_connect
 
 client2.subscribe("Qubic/Pod ID")
