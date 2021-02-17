@@ -4,10 +4,12 @@ import cv2
 import cv2.aruco as aruco
 import numpy as np
 import paho.mqtt.client as mqtt
+from paho.mqtt import publish
+import os
 
 mqttBroker = "test.mosquitto.org"
 
-client = mqtt.Client("Temperature_Inside")
+client = mqtt.Client("Qubic")
 client.connect(mqttBroker)
 
 camera_width = 800
@@ -125,6 +127,40 @@ class Qubic:
         else:
             pass
 
+    def Capture_and_Send_Image(self, cap, pod_status):
+
+        MQTT_PATH = "Qubic/Saved_Images"
+
+        current_time = datetime.now()
+        date_folder = str(current_time.date())
+        file_name = str(current_time.time())[:-7].replace(":", "_")
+        format = ".jpg"
+        path = r"C:\Users\zzh84\PycharmProjects\MotionDetection\Check_in_out_images\{}\{}".format(self.qubic_id, date_folder)
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        ret, current_img = cap.read()
+
+        directory = "Check_in_out_images/{}/{}/".format(self.qubic_id, date_folder)
+
+        cv2.imwrite(directory + file_name + format, current_img)
+
+        print()
+        print("Camera's image in Qubic({}) captured at {}. The pod is currently {}.".format(self.qubic_id, str(current_time)[:-7], pod_status))
+
+        f = open(directory + file_name + format, "rb")
+        fileContent = f.read()
+        byteArr = bytearray(fileContent)
+
+        publish.single(MQTT_PATH, byteArr, hostname=mqttBroker)
+
+        print("Saved image has been successfully sent to clients!")
+        print()
+
+    def Send_Image(self):
+        pass
+
     def User_Detection(self):
         Pod_Status = None
         avg = None
@@ -140,10 +176,11 @@ class Qubic:
         mqtt_start_time = datetime.now()
         mark_time = datetime.now()
 
-        client.publish("Pod ID", self.qubic_id)
+        client.publish("Qubic/Pod ID", self.qubic_id)
 
         while True:
             ret, real_frame = cap.read()
+
             current_frame = cv2.cvtColor(real_frame, cv2.COLOR_BGR2GRAY)
             current_frame = cv2.GaussianBlur(current_frame, (25, 25), 0)
 
@@ -219,22 +256,28 @@ class Qubic:
                 color = (0, 0, 255)
             else:
                 color = (0, 255, 0)
+
             cv2.putText(real_frame, 'Pod Status: ' + Pod_Status, (5, 430), Font,
                         Font_scale, color, Font_thickness, cv2.LINE_AA)
 
-            cv2.imshow('Obj_Threshold', Obj_threshold)
-            cv2.imshow('Mot_Threshold', Mot_threshold)
+            # cv2.imshow('Obj_Threshold', Obj_threshold)
+            # cv2.imshow('Mot_Threshold', Mot_threshold)
             cv2.imshow('Display', real_frame)
 
             mqtt_current_time = datetime.now()
             if (mqtt_current_time - mqtt_start_time).seconds >= 5:
                 msgs = "{}|{}|{}|{}".format(self.qubic_id, Obj_Status, Mot_Status, Pod_Status)
-                client.publish("Overall Status", msgs)
+                client.publish("Qubic/Overall Status", msgs)
                 mqtt_start_time = datetime.now()
 
+            k = cv2.waitKey(1)
+            if k%256 == 32:
+                self.Capture_and_Send_Image(cap, Pod_Status)
+
             if cv2.waitKey(1) & thread_switch == False:
-                client.publish("Overall Status", "{}|{}|{}|{}".format(self.qubic_id, None, None, "User Checked Out"))
+                client.publish("Qubic/Overall Status", "{}|{}|{}|{}".format(self.qubic_id, None, None, "User Checked Out"))
                 break
+
 
         cap.release()
         cv2.destroyAllWindows()

@@ -10,9 +10,9 @@ def resolution(width, height):
 avg = None
 
 cap = cv2.VideoCapture(0)
-resolution(800, 400)
+resolution(1280, 720)
 Font_Org = (5, 35)
-Font_scale = 1.2
+Font_scale = 1.5
 Font = cv2.FONT_HERSHEY_SIMPLEX
 Font_thickness = 2
 
