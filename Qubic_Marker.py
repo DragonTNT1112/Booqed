@@ -158,6 +158,9 @@ class Qubic:
         print("Saved image has been successfully sent to clients!")
         print()
 
+    def Send_Image(self):
+        pass
+
     def User_Detection(self):
         Pod_Status = None
         avg = None
