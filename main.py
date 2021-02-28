@@ -1,4 +1,4 @@
-from Qubic_Marker import *
+from Qubic import *
 
 Pod_ID = 555556655
 check_in_time = "2021-01-26 10:00:00"
