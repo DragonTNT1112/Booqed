@@ -144,7 +144,12 @@ class MainWindow():
         except:
             received_lines = []
 
-        self.differences = list(set(sent_lines) - set(received_lines))
+        sent_lines_copy = sent_lines.copy()
+        for item in sent_lines:
+            if item in received_lines:
+                sent_lines_copy.remove(item)
+
+        self.differences = sent_lines_copy
 
         if len(self.differences) == 0:
             self.log_box.config(state="normal")
@@ -476,5 +481,5 @@ class MainWindow():
 
 if __name__ == "__main__":
     root = tk.Tk()
-    main_window = MainWindow(root, cv2.VideoCapture(0), 3550)
+    main_window = MainWindow(root, cv2.VideoCapture(0), 2555)
     root.mainloop()
