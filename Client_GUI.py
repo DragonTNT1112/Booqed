@@ -105,14 +105,14 @@ class MainWindow():
 
             time_period = "{}_{} - {}_{}".format(Hour, Min, next_hour, next_min)
 
-            path = r"C:\Users\zzh84\PycharmProjects\MotionDetection\Received_images\{}\{}\{}".format(self.ID,
+            path = r"C:\Users\zzh84\OneDrive\Documents\GitHub\Booqed\Received_images\{}\{}\{}".format(self.ID,
                                                                                                      date_folder,
                                                                                                      time_period)
 
             if not os.path.exists(path):
                 os.makedirs(path)
 
-            directory = "Received_images/{}/{}/{}/".format(self.ID, date_folder, time_period)
+            directory = "C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/Received_images/{}/{}/{}/".format(self.ID, date_folder, time_period)
 
             f = open(directory + self.file_name + format, "wb")
             f.write(message.payload)

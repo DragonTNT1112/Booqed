@@ -173,7 +173,7 @@ class MainWindow():
             Time_Period = info[2]
             file_name = info[3]
             format = ".jpg"
-            file_dir = ("Check_in_out_images/{}/{}/{}/{}{}".format(Pod_ID, Date, Time_Period, file_name, format))
+            file_dir = ("C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/Check_in_out_images/{}/{}/{}/{}{}".format(Pod_ID, Date, Time_Period, file_name, format))
             self.send_img_file_name(file_name)
             sleep(0.5)
             self.send_calibrated_img(file_dir, file_name, Pod_ID)
@@ -256,7 +256,7 @@ class MainWindow():
         self.send_img_file_name(self.file_name)
 
         format = ".jpg"
-        path = r"C:\Users\zzh84\PycharmProjects\MotionDetection\Check_in_out_images\{}\{}\{}".format(self.ID,
+        path = r"C:\Users\zzh84\OneDrive\Documents\GitHub\Booqed\Check_in_out_images\{}\{}\{}".format(self.ID,
                                                                                                      date_folder,
                                                                                                      time_period)
         # Data Log
@@ -267,7 +267,7 @@ class MainWindow():
         if not os.path.exists(path):
             os.makedirs(path)
 
-        directory = "Check_in_out_images/{}/{}/{}/".format(self.ID, date_folder, time_period)
+        directory = "C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/Check_in_out_images/{}/{}/{}/".format(self.ID, date_folder, time_period)
         cv2.imwrite(directory + self.file_name + format, self.real_frame)
 
 
