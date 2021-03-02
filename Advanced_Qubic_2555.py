@@ -33,6 +33,17 @@ class MainWindow():
         self.mqttBroker = "test.mosquitto.org"
         self.client = mqtt.Client("Qubic_{}".format(self.ID))
         self.server_status = False
+        self.topic_list = ["Qubic/Connect to Pod",
+                           "Qubic/Connection State",
+                           "Qubic/Get Pod Status",
+                           "Qubic/Pod Status",
+                           "Qubic/Get Image",
+                           "Qubic/File Names",
+                           "Qubic/Requested Images",
+                           "Qubic/Get Difference",
+                           "Qubic/Differences",
+                           "Qubic/Get Un-sent Images",
+                           "Qubic/Sync Database"]
 
         self.file_name = ""
         self.img_log_file_name = "Posted_Images.txt"
@@ -107,18 +118,14 @@ class MainWindow():
         self.log_box.config(state="disabled")
         self.check_out.config(state="disabled")
 
-    def send_calibrated_img(self, img, file_name, ID):
+    def send_pod_status(self):
         time = str(datetime.now())[:-7]
-        MQTT_PATH = "Qubic/Saved Images"
-        f = open(img, "rb")
-        fileContent = f.read()
-        byteArr = bytearray(fileContent)
+        msgs = "{}|{}|{}|{}".format(self.ID, self.Obj_Status, self.Mot_Status, self.Pod_Status)
 
-        self.client.publish(MQTT_PATH, byteArr, 0)
+        self.client.publish("Qubic/Pod Status", msgs)
 
         self.log_box.config(state="normal")
-        self.log_box.insert("end","{} - Calibrated image ({}) from Pod ({}) re-sent to broker\n".format(str(datetime.now())[:-7],
-                                                                                          file_name, ID))
+        self.log_box.insert("end", "{} - Pod's Status have successfully sent to broker...\n".format(time))
         self.log_box.config(state="disabled")
 
     def get_differences(self):
@@ -150,21 +157,24 @@ class MainWindow():
                 sent_lines_copy.remove(item)
 
         self.differences = sent_lines_copy
+        return len(self.differences)
 
-        if len(self.differences) == 0:
-            self.log_box.config(state="normal")
-            self.log_box.insert("end", "{} - No images need to be synced...\n".format(time))
-            self.log_box.config(state="disabled")
+    def send_calibrated_img(self, img, file_name, ID):
+        time = str(datetime.now())[:-7]
+        MQTT_TOPIC = "Qubic/Requested Images"
+        f = open(img, "rb")
+        fileContent = f.read()
+        byteArr = bytearray(fileContent)
 
-            self.calibrate.config(state="disabled")
-        else:
-            self.log_box.config(state="normal")
-            self.log_box.insert("end", "{} - {} images need to be synced...\n".format(time, len(self.differences)))
-            self.log_box.config(state="disabled")
+        self.client.publish(MQTT_TOPIC, byteArr, 0)
 
-            self.calibrate.config(state="normal")
+        self.log_box.config(state="normal")
+        self.log_box.insert("end","{} - Calibrated image ({}) from Pod ({}) re-sent to broker\n".format(str(datetime.now())[:-7],
+                                                                                          file_name, ID))
+        self.log_box.config(state="disabled")
 
-    def calibrate_data(self):
+
+    def sync_data(self):
         files_dirs = []
         for item in self.differences:
             info = item[:-1].split("|")
@@ -184,37 +194,106 @@ class MainWindow():
         time = str(datetime.now())[:-7]
         try:
             if not self.server_status:
+
+                self.client.on_connect = self.on_connect
+                self.client.on_message = self.on_message
+
                 self.client.connect(self.mqttBroker)
 
+                self.client.loop_start()
+
                 self.log_box.config(state="normal")
+                self.log_box.delete("1.0", "end")
                 self.log_box.insert("end", "{} - Connected to MQTT broker...\n".format(time))
                 self.log_box.config(state="disabled")
 
-                self.send_status.config(state="normal")
                 self.server_status = True
             else:
                 self.client.connect(self.mqttBroker)
 
                 self.log_box.config(state="normal")
-                self.log_box.insert("end", "{} - Ronnected to MQTT broker...\n".format(time))
+                self.log_box.delete("1.0", "end")
+                self.log_box.insert("end", "{} - Reconnected to MQTT broker...\n".format(time))
                 self.log_box.config(state="disabled")
 
-                self.take_img.config(state="disabled")
-                self.get_calibrate_data.config(state="disabled")
-                self.calibrate.config(state="disabled")
         except:
             self.log_box.config(state="normal")
             self.log_box.insert("end", "Unable to connect to MQTT server...\n")
             self.log_box.config(state="disabled")
 
-    def send_captured_img(self, img):
+    def on_message(self, client, userdata, message):
+
+        if message.topic == "Qubic/Connect to Pod":
+            temp_ID = int(message.payload.decode("utf-8"))
+            if temp_ID == self.ID:
+                time = str(datetime.now())[:-7]
+                MQTT_TOPIC = "Qubic/Connection State"
+                self.log_box.config(state="normal")
+                self.log_box.insert("end", "{} - Get connection request from client...\n".format(time))
+                self.log_box.config(state="disabled")
+                self.client.publish(MQTT_TOPIC, self.ID)
+
+        if message.topic == "Qubic/Get Pod Status":
+            if int(message.payload.decode("utf-8")) == 1:
+                time = str(datetime.now())[:-7]
+                MQTT_TOPIC = "Qubic/Pod Status"
+                self.log_box.config(state="normal")
+                self.log_box.insert("end", "{} - Get pod status request from client...\n".format(time))
+                self.log_box.config(state="disabled")
+                self.send_pod_status()
+
+        if message.topic == "Qubic/Get Image":
+            if int(message.payload.decode("utf-8")) == 1:
+                time = str(datetime.now())[:-7]
+                MQTT_TOPIC = "Qubic/Requested Images"
+                self.log_box.config(state="normal")
+                self.log_box.insert("end", "{} - Get pod image request from client...\n".format(time))
+                self.log_box.config(state="disabled")
+                self.capture_image(MQTT_TOPIC)
+
+        if message.topic == "Qubic/Get Difference":
+            if int(message.payload.decode("utf-8")) == 1:
+                time = str(datetime.now())[:-7]
+                MQTT_TOPIC = "Qubic/Differences"
+                self.log_box.config(state="normal")
+                self.log_box.insert("end", "{} - Get database comparison request from client...\n".format(time))
+                self.log_box.config(state="disabled")
+
+                difference = self.get_differences()
+
+                self.client.publish(MQTT_TOPIC, difference)
+
+                self.log_box.config(state="normal")
+                self.log_box.insert("end", "{} - Database comparison result has been sent to client...\n".format(time))
+                self.log_box.config(state="disabled")
+
+        if message.topic == "Qubic/Get Un-sent Images":
+            if int(message.payload.decode("utf-8")) == 1:
+                time = str(datetime.now())[:-7]
+                MQTT_TOPIC = "Qubic/Sync Database"
+                self.log_box.config(state="normal")
+                self.log_box.insert("end", "{} - Get database sync request from client...\n".format(time))
+                self.log_box.config(state="disabled")
+
+                self.sync_data()
+                self.client.publish(MQTT_TOPIC, 1)
+
+                self.log_box.config(state="normal")
+                self.log_box.insert("end", "{} - Sync data has been sent to client...\n".format(time))
+                self.log_box.config(state="disabled")
+
+
+    def on_connect(self, client, userdata, flags, rc):
+        for i in self.topic_list:
+            client.subscribe(i)
+
+    def send_captured_img(self, img, MQTT_TOPIC):
         time = str(datetime.now())[:-7]
-        MQTT_PATH = "Qubic/Saved Images"
         f = open(img, "rb")
         fileContent = f.read()
         byteArr = bytearray(fileContent)
 
-        self.client.publish(MQTT_PATH, byteArr, 0)
+        self.client.publish(MQTT_TOPIC, byteArr, 0)
 
         self.log_box.config(state="normal")
         self.log_box.insert("end","{} - Image ({}) from Pod ({}) sent to broker\n".format(str(datetime.now())[:-7],
@@ -226,19 +305,53 @@ class MainWindow():
         MQTT_PATH = "Qubic/File Names"
         self.client.publish(MQTT_PATH, filename)
 
-    def send_Qubic_status(self):
+    def save_local_image(self):
         time = str(datetime.now())[:-7]
-        msgs = "{}|{}|{}|{}".format(self.ID, self.Obj_Status, self.Mot_Status, self.Pod_Status)
-        self.client.publish("Qubic/Overall Status", msgs)
+        current_time = datetime.now()
+        date_folder = str(current_time.date())
+        if current_time.minute < 30:
+            Hour = str(current_time.hour)
+            next_hour = Hour
+            Min = '00'
+            next_min = '30'
+        else:
+            Hour = str(current_time.hour)
+            next_hour = str(int(current_time.hour) + 1)
+            Min = '30'
+            next_min = '00'
+
+        time_period = "{}_{} - {}_{}".format(Hour, Min, next_hour, next_min)
+        self.file_name = str(current_time.time())[:-7].replace(":", "_")
+        self.send_img_file_name(self.file_name)
+
+        format = ".jpg"
+        path = r"C:\Users\zzh84\OneDrive\Documents\GitHub\Booqed\Check_in_out_images\{}\{}\{}".format(self.ID,
+                                                                                                      date_folder,
+                                                                                                      time_period)
+        # Data Log
+        img_log_file = open(self.img_log_file_name, "a")
+        img_log_file.write("{}|{}|{}|{}\n".format(self.ID, date_folder, time_period, self.file_name))
+        img_log_file.close()
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+        directory = "C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/Check_in_out_images/{}/{}/{}/".format(self.ID,
+                                                                                                           date_folder,
+                                                                                                           time_period)
+        cv2.imwrite(directory + self.file_name + format, self.real_frame)
 
         self.log_box.config(state="normal")
-        self.log_box.insert("end", "{} - Pod's Status have successfully sent to broker...\n".format(time))
+        self.log_box.insert("end", "{} - Image ({}) from Pod ({}) has been saved to local...\n".format(time,
+                                                                                           self.file_name,
+                                                                                           self.ID))
         self.log_box.config(state="disabled")
 
-        self.take_img.config(state="normal")
-        self.get_calibrate_data.config(state="normal")
+        if self.Obj_Status == True:
+            self.file_name = str(current_time.time())[:-7].replace(":", "_") + "_Reference"
+            cv2.imwrite(directory + self.file_name + format, self.base_image_unchanged)
 
-    def capture_image(self):
+    def capture_image(self, MQTT_TOPIC):
         current_time = datetime.now()
         date_folder = str(current_time.date())
         if current_time.minute < 30:
@@ -272,7 +385,7 @@ class MainWindow():
         cv2.imwrite(directory + self.file_name + format, self.real_frame)
 
 
-        self.send_captured_img(directory + self.file_name + format)
+        self.send_captured_img(directory + self.file_name + format, MQTT_TOPIC)
 
 
         if self.Obj_Status == True:
@@ -405,7 +518,7 @@ class MainWindow():
 
     def set_up_window(self, window):
 
-        window.title("Qubic Management")
+        window.title("Qubic 3667")
         # window.geometry("{}x{}".format(window_width, window_height))
 
         # Menu for the navigation
@@ -451,21 +564,10 @@ class MainWindow():
                                    font="Helvetica 16 bold", width=15, bg='red', fg='white')
         self.check_out.grid(row=6, column=1, padx=5, pady=5, stick="w")
 
-        self.take_img = tk.Button(window, text="Capture Image", command=self.capture_image,
-                                  font="Helvetica 16 bold", width=15, state="disabled")
-        self.take_img.grid(row=8, column=1, padx=5, pady=5, stick="w")
+        self.take_img = tk.Button(window, text="Capture Image", command=self.save_local_image,
+                                  font="Helvetica 16 bold", width=15)
+        self.take_img.grid(row=7, column=1, padx=5, pady=5, stick="w")
 
-        self.send_status = tk.Button(window, text="Send Pod Status", command=self.send_Qubic_status,
-                                     font="Helvetica 16 bold", width=15, state="disabled")
-        self.send_status.grid(row=7, column=1, padx=5, pady=5, stick="w")
-
-        self.get_calibrate_data = tk.Button(window, text="Get Data Differeces", command=self.get_differences,
-                                     font="Helvetica 16 bold", width=15, state="disabled")
-        self.get_calibrate_data.grid(row=9, column=1, padx=5, pady=5, stick="w")
-
-        self.calibrate = tk.Button(window, text="Re-send Data", command=self.calibrate_data,
-                                     font="Helvetica 16 bold", width=15, state="disabled")
-        self.calibrate.grid(row=10, column=1, padx=5, pady=5, stick="w")
 
         # Create data log box
         self.log_box = tk.Text(root, wrap="word", width=70)
