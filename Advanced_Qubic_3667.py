@@ -295,8 +295,20 @@ class MainWindow():
                 self.log_box.insert("end", "{} - Database comparison result has been sent to client...\n".format(time))
                 self.log_box.config(state="disabled")
             else:
+                time = str(datetime.now())[:-7]
+                MQTT_TOPIC = "Qubic/Differences"
+                self.log_box.config(state="normal")
+                self.log_box.insert("end", "{} - Get database comparison request from client...\n".format(time))
+                self.log_box.config(state="disabled")
+
                 with open("Received_Log.txt", 'w') as f:
                     f.write("")
+
+                self.client.publish(MQTT_TOPIC, 0)
+
+                self.log_box.config(state="normal")
+                self.log_box.insert("end", "{} - Database comparison result has been sent to client...\n".format(time))
+                self.log_box.config(state="disabled")
 
         if message.topic == "Qubic/Get Un-sent Images":
             if int(message.payload.decode("utf-8")) == 1:

@@ -268,9 +268,9 @@ class MainWindow():
         self.client.loop_start()
 
         self.title_ID.config(text="POD - Not Connected")
-        self.Pod.config(text="Not Connected")
-        self.Obj.config(text="Not Connected")
-        self.Mot.config(text="Not Connected")
+        self.Pod.config(text="Not Connected", fg='black')
+        self.Obj.config(text="Not Connected", fg='black')
+        self.Mot.config(text="Not Connected", fg='black')
 
         self.connect_pod.config(state="normal")
         self.ID_Input.config(state="normal")
