@@ -3,7 +3,6 @@ from PIL import Image, ImageTk
 import cv2
 import numpy as np
 import paho.mqtt.client as mqtt
-from paho.mqtt import publish
 from datetime import datetime
 import os
 from time import *
@@ -33,7 +32,7 @@ class MainWindow():
         self.mqttBroker = "test.mosquitto.org"
         self.client = mqtt.Client("Qubic_{}".format(self.ID))
         self.server_status = False
-        self.topic_list = ["Qubic/Connect to Pod",
+        self.topic_list = ["Qubic/Connect to Qubic",
                            "Qubic/Connection State",
                            "Qubic/Get Pod Status",
                            "Qubic/Pod Status",
@@ -47,7 +46,7 @@ class MainWindow():
 
         self.file_name = ""
         self.img_log_file_name = "Posted_Images.txt"
-        self.received_log_file_name = "Received_Images.txt"
+        self.received_log_file_name = "Received_Log.txt"
 
         self.differences = []
 
@@ -127,6 +126,12 @@ class MainWindow():
         self.log_box.config(state="normal")
         self.log_box.insert("end", "{} - Pod's Status have successfully sent to broker...\n".format(time))
         self.log_box.config(state="disabled")
+
+    def encode_content2text(self, encode_content):
+        lines = encode_content.split("&")[:-1]
+        with open("Received_Log.txt", 'w') as f:
+            for line in lines:
+                f.write("{}\n".format(line))
 
     def get_differences(self):
         time = str(datetime.now())[:-7]
@@ -212,7 +217,6 @@ class MainWindow():
                 self.client.connect(self.mqttBroker)
 
                 self.log_box.config(state="normal")
-                self.log_box.delete("1.0", "end")
                 self.log_box.insert("end", "{} - Reconnected to MQTT broker...\n".format(time))
                 self.log_box.config(state="disabled")
 
@@ -223,7 +227,7 @@ class MainWindow():
 
     def on_message(self, client, userdata, message):
 
-        if message.topic == "Qubic/Connect to Pod":
+        if message.topic == "Qubic/Connect to Qubic":
             temp_ID = int(message.payload.decode("utf-8"))
             if temp_ID == self.ID:
                 time = str(datetime.now())[:-7]
@@ -252,13 +256,14 @@ class MainWindow():
                 self.capture_image(MQTT_TOPIC)
 
         if message.topic == "Qubic/Get Difference":
-            if int(message.payload.decode("utf-8")) == 1:
+            if message.payload.decode("utf-8") != "":
                 time = str(datetime.now())[:-7]
                 MQTT_TOPIC = "Qubic/Differences"
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Get database comparison request from client...\n".format(time))
                 self.log_box.config(state="disabled")
 
+                self.encode_content2text(message.payload.decode("utf-8"))
                 difference = self.get_differences()
 
                 self.client.publish(MQTT_TOPIC, difference)
@@ -266,6 +271,9 @@ class MainWindow():
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Database comparison result has been sent to client...\n".format(time))
                 self.log_box.config(state="disabled")
+            else:
+                with open("Received_Log.txt", 'w') as f:
+                    f.write("")
 
         if message.topic == "Qubic/Get Un-sent Images":
             if int(message.payload.decode("utf-8")) == 1:

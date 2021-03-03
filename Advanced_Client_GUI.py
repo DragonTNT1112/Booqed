@@ -1,9 +1,7 @@
 import tkinter as tk
 from datetime import datetime
 import paho.mqtt.client as mqtt
-from paho.mqtt import publish
 import os
-from time import *
 
 
 class MainWindow():
@@ -11,7 +9,7 @@ class MainWindow():
         self.window = window
 
         self.mqttBroker = "test.mosquitto.org"
-        self.topic_list = ["Qubic/Connect to Pod",
+        self.topic_list = ["Qubic/Connect to Qubic",
                            "Qubic/Connection State",
                            "Qubic/Get Pod Status",
                            "Qubic/Pod Status",
@@ -45,7 +43,7 @@ class MainWindow():
         self.set_up_window(window)
 
     def connect_to_pod(self):
-        MQTT_TOPIC = "Qubic/Connect to Pod"
+        MQTT_TOPIC = "Qubic/Connect to Qubic"
         time = str(datetime.now())[:-7]
         if len(self.ID_Input.get("1.0", "end-1c")) != 0:
             try:
@@ -81,10 +79,24 @@ class MainWindow():
         self.log_box.insert("end", "{} - Pod's image request has been sent to Pod ({})\n".format(time, self.ID))
         self.log_box.config(state="disabled")
 
+    def get_decode_text(self):
+        try:
+            with open(self.received_img_log_file_name, 'r') as f:
+                line_list = f.readlines()
+                content = ""
+                for line in line_list:
+                    line = line.replace("\n", "")
+                    content = content + line + "&"
+
+            self.encode_content = content.encode('utf-8')
+        except:
+            self.encode_content = ""
+
     def get_differences(self):
         time = str(datetime.now())[:-7]
         MQTT_TOPIC = "Qubic/Get Difference"
-        self.client.publish(MQTT_TOPIC, 1)
+        self.get_decode_text()
+        self.client.publish(MQTT_TOPIC, self.encode_content)
         self.log_box.config(state="normal")
         self.log_box.insert("end", "{} - Database comparison request has been sent to Pod ({})\n".format(time, self.ID))
         self.log_box.config(state="disabled")
@@ -296,23 +308,23 @@ class MainWindow():
         self.Mot.grid(row=3, column=1, stick="e")
 
         self.get_img = tk.Button(window, text="Get Capture Image", command=self.get_capture_image,
-                                  font="Helvetica 16 bold", width=15, state="disabled")
+                                  font="Helvetica 16 bold", width=18, state="disabled")
         self.get_img.grid(row=4, column=1, padx=5, pady=5)
 
         self.get_status = tk.Button(window, text="Get Pod Status", command=self.get_qubic_status,
-                                     font="Helvetica 16 bold", width=15, state="disabled")
+                                     font="Helvetica 16 bold", width=18, state="disabled")
         self.get_status.grid(row=4, column=0, padx=5, pady=5)
 
-        self.get_calibrate_data = tk.Button(window, text="Get Data Differeces", command=self.get_differences,
-                                            font="Helvetica 16 bold", width=15, state="disabled")
+        self.get_calibrate_data = tk.Button(window, text="Get Data Differences", command=self.get_differences,
+                                            font="Helvetica 16 bold", width=18, state="disabled")
         self.get_calibrate_data.grid(row=5, column=0, padx=5, pady=5)
 
         self.calibrate = tk.Button(window, text="Re-send Data", command=self.get_resent_data,
-                                   font="Helvetica 16 bold", width=15, state="disabled")
+                                   font="Helvetica 16 bold", width=18, state="disabled")
         self.calibrate.grid(row=5, column=1, padx=5, pady=5)
 
         self.connect_pod = tk.Button(window, text="Connect to Pod", command=self.connect_to_pod,
-                                   font="Helvetica 16 bold", bg="#75ffda", width=15, state="disabled")
+                                   font="Helvetica 16 bold", bg="#75ffda", width=18, state="disabled")
         self.connect_pod.grid(row=6, column=0, columnspan=1, padx=5, pady=5)
 
         # Create ID input box
@@ -321,7 +333,7 @@ class MainWindow():
         self.ID_Input.config(font="Ubuntu 20", state="disabled")
 
         # Create log widget
-        self.log_box = tk.Text(window, wrap="word", width=80)
+        self.log_box = tk.Text(window, wrap="word", width=80, height=40)
         self.log_box.grid(row=7, column=0, columnspan=2, padx=10, pady=10)
         self.log_box.config(font="Ubuntu 12 italic", state="disabled")
 

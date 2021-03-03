@@ -3,7 +3,6 @@ from PIL import Image, ImageTk
 import cv2
 import numpy as np
 import paho.mqtt.client as mqtt
-from paho.mqtt import publish
 from datetime import datetime
 import os
 from time import *
