@@ -32,7 +32,7 @@ class MainWindow():
         self.mqttBroker = "test.mosquitto.org"
         self.client = mqtt.Client("Qubic_{}".format(self.ID))
         self.server_status = False
-        self.topic_list = ["Qubic/Connect to Pod",
+        self.topic_list = ["Qubic/Connect to Qubic",
                            "Qubic/Connection State",
                            "Qubic/Get Pod Status",
                            "Qubic/Pod Status",
@@ -46,7 +46,7 @@ class MainWindow():
 
         self.file_name = ""
         self.img_log_file_name = "Posted_Images.txt"
-        self.received_log_file_name = "Received_Images.txt"
+        self.received_log_file_name = "Received_Log.txt"
 
         self.differences = []
 
@@ -126,6 +126,12 @@ class MainWindow():
         self.log_box.config(state="normal")
         self.log_box.insert("end", "{} - Pod's Status have successfully sent to broker...\n".format(time))
         self.log_box.config(state="disabled")
+
+    def encode_content2text(self, encode_content):
+        lines = encode_content.split("&")[:-1]
+        with open("Received_Log.txt", 'w') as f:
+            for line in lines:
+                f.write("{}\n".format(line))
 
     def get_differences(self):
         time = str(datetime.now())[:-7]
@@ -208,10 +214,16 @@ class MainWindow():
 
                 self.server_status = True
             else:
+                self.client.on_connect = self.on_connect
+                self.client.on_message = self.on_message
+
                 self.client.connect(self.mqttBroker)
 
+                self.client.loop_start()
+
+                self.server_status = True
+
                 self.log_box.config(state="normal")
-                self.log_box.delete("1.0", "end")
                 self.log_box.insert("end", "{} - Reconnected to MQTT broker...\n".format(time))
                 self.log_box.config(state="disabled")
 
@@ -220,9 +232,25 @@ class MainWindow():
             self.log_box.insert("end", "Unable to connect to MQTT server...\n")
             self.log_box.config(state="disabled")
 
+    def Disconnect2Mqtt(self):
+        time = str(datetime.now())[:-7]
+        if self.server_status:
+            self.client.disconnect()
+            self.client.loop_stop()
+            self.server_status = False
+
+            self.log_box.config(state="normal")
+            self.log_box.insert("end", "{} - Disconnected from MQTT broker...\n".format(time))
+            self.log_box.config(state="disabled")
+
+        else:
+            self.log_box.config(state="normal")
+            self.log_box.insert("end", "{} - Already disconnected from MQTT broker...\n".format(time))
+            self.log_box.config(state="disabled")
+
     def on_message(self, client, userdata, message):
 
-        if message.topic == "Qubic/Connect to Pod":
+        if message.topic == "Qubic/Connect to Qubic":
             temp_ID = int(message.payload.decode("utf-8"))
             if temp_ID == self.ID:
                 time = str(datetime.now())[:-7]
@@ -251,13 +279,14 @@ class MainWindow():
                 self.capture_image(MQTT_TOPIC)
 
         if message.topic == "Qubic/Get Difference":
-            if int(message.payload.decode("utf-8")) == 1:
+            if message.payload.decode("utf-8") != "":
                 time = str(datetime.now())[:-7]
                 MQTT_TOPIC = "Qubic/Differences"
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Get database comparison request from client...\n".format(time))
                 self.log_box.config(state="disabled")
 
+                self.encode_content2text(message.payload.decode("utf-8"))
                 difference = self.get_differences()
 
                 self.client.publish(MQTT_TOPIC, difference)
@@ -265,6 +294,9 @@ class MainWindow():
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Database comparison result has been sent to client...\n".format(time))
                 self.log_box.config(state="disabled")
+            else:
+                with open("Received_Log.txt", 'w') as f:
+                    f.write("")
 
         if message.topic == "Qubic/Get Un-sent Images":
             if int(message.payload.decode("utf-8")) == 1:
@@ -517,7 +549,7 @@ class MainWindow():
 
     def set_up_window(self, window):
 
-        window.title("Qubic 3667")
+        window.title("Qubic {}".format(self.ID))
         # window.geometry("{}x{}".format(window_width, window_height))
 
         # Menu for the navigation
@@ -527,6 +559,7 @@ class MainWindow():
 
         connectMenu = tk.Menu(menubar, tearoff=0)
         connectMenu.add_command(label="Connect to MQTT broker", command=self.Connect2Mqtt)
+        connectMenu.add_command(label="Disconnect to MQTT broker", command=self.Disconnect2Mqtt)
         menubar.add_cascade(label="Connect", menu=connectMenu)
 
         # Title Label

@@ -214,7 +214,14 @@ class MainWindow():
 
                 self.server_status = True
             else:
+                self.client.on_connect = self.on_connect
+                self.client.on_message = self.on_message
+
                 self.client.connect(self.mqttBroker)
+
+                self.client.loop_start()
+
+                self.server_status = True
 
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Reconnected to MQTT broker...\n".format(time))
@@ -223,6 +230,22 @@ class MainWindow():
         except:
             self.log_box.config(state="normal")
             self.log_box.insert("end", "Unable to connect to MQTT server...\n")
+            self.log_box.config(state="disabled")
+
+    def Disconnect2Mqtt(self):
+        time = str(datetime.now())[:-7]
+        if self.server_status:
+            self.client.disconnect()
+            self.client.loop_stop()
+            self.server_status = False
+
+            self.log_box.config(state="normal")
+            self.log_box.insert("end", "{} - Disconnected from MQTT broker...\n".format(time))
+            self.log_box.config(state="disabled")
+
+        else:
+            self.log_box.config(state="normal")
+            self.log_box.insert("end", "{} - Already disconnected from MQTT broker...\n".format(time))
             self.log_box.config(state="disabled")
 
     def on_message(self, client, userdata, message):
@@ -526,7 +549,7 @@ class MainWindow():
 
     def set_up_window(self, window):
 
-        window.title("Qubic 3667")
+        window.title("Qubic {}".format(self.ID))
         # window.geometry("{}x{}".format(window_width, window_height))
 
         # Menu for the navigation
@@ -536,6 +559,7 @@ class MainWindow():
 
         connectMenu = tk.Menu(menubar, tearoff=0)
         connectMenu.add_command(label="Connect to MQTT broker", command=self.Connect2Mqtt)
+        connectMenu.add_command(label="Disconnect to MQTT broker", command=self.Disconnect2Mqtt)
         menubar.add_cascade(label="Connect", menu=connectMenu)
 
         # Title Label

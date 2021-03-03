@@ -125,6 +125,8 @@ class MainWindow():
                 self.log_box.insert("end", "{} - Connected to Pod ({})...\n".format(time, self.ID))
                 self.log_box.config(state="disabled")
 
+                self.connect_pod.config(state="disabled")
+
                 self.title_ID.config(text="POD ID - {}".format(self.ID))
                 self.get_status.config(state="normal")
                 self.get_img.config(state="normal")
@@ -264,6 +266,11 @@ class MainWindow():
         self.client.connect(self.mqttBroker)
 
         self.client.loop_start()
+
+        self.title_ID.config(text="POD - Not Connected")
+        self.Pod.config(text="Not Connected")
+        self.Obj.config(text="Not Connected")
+        self.Mot.config(text="Not Connected")
 
         self.connect_pod.config(state="normal")
         self.ID_Input.config(state="normal")
