@@ -29,23 +29,25 @@ class MainWindow():
         self.ID = Pod_ID
         self.window = window
 
+        self.folder_directory = "C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/"
+
         self.mqttBroker = "test.mosquitto.org"
         self.client = mqtt.Client("Qubic_{}".format(self.ID))
         self.server_status = False
-        self.topic_list = ["Qubic/Connect to Qubic",
-                           "Qubic/Connection State",
-                           "Qubic/Get Pod Status",
-                           "Qubic/Pod Status",
-                           "Qubic/Get Image",
-                           "Qubic/File Names",
-                           "Qubic/Requested Images",
-                           "Qubic/Get Difference",
-                           "Qubic/Differences",
-                           "Qubic/Get Un-sent Images",
-                           "Qubic/Sync Database"]
+        self.topic_list = ["Qubic/Connect to Qubic/{}".format(Pod_ID),
+                           "Qubic/Connection State/{}".format(Pod_ID),
+                           "Qubic/Get Pod Status/{}".format(Pod_ID),
+                           "Qubic/Pod Status/{}".format(Pod_ID),
+                           "Qubic/Get Image/{}".format(Pod_ID),
+                           "Qubic/File Names/{}".format(Pod_ID),
+                           "Qubic/Requested Images/{}".format(Pod_ID),
+                           "Qubic/Get Difference/{}".format(Pod_ID),
+                           "Qubic/Differences/{}".format(Pod_ID),
+                           "Qubic/Get Un-sent Images/{}".format(Pod_ID),
+                           "Qubic/Sync Database/{}".format(Pod_ID)]
 
         self.file_name = ""
-        self.img_log_file_name = "Posted_Images.txt"
+        self.img_log_file_name = "Pod({}) - Posted_Images.txt".format(Pod_ID)
         self.received_log_file_name = "Received_Log.txt"
 
         self.differences = []
@@ -121,7 +123,7 @@ class MainWindow():
         time = str(datetime.now())[:-7]
         msgs = "{}|{}|{}|{}".format(self.ID, self.Obj_Status, self.Mot_Status, self.Pod_Status)
 
-        self.client.publish("Qubic/Pod Status", msgs)
+        self.client.publish("Qubic/Pod Status/{}".format(self.ID), msgs)
 
         self.log_box.config(state="normal")
         self.log_box.insert("end", "{} - Pod's Status have successfully sent to broker...\n".format(time))
@@ -166,7 +168,7 @@ class MainWindow():
 
     def send_calibrated_img(self, img, file_name, ID):
         time = str(datetime.now())[:-7]
-        MQTT_TOPIC = "Qubic/Requested Images"
+        MQTT_TOPIC = "Qubic/Requested Images/{}".format(self.ID)
         f = open(img, "rb")
         fileContent = f.read()
         byteArr = bytearray(fileContent)
@@ -188,7 +190,7 @@ class MainWindow():
             Time_Period = info[2]
             file_name = info[3]
             format = ".jpg"
-            file_dir = ("C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/Check_in_out_images/{}/{}/{}/{}{}".format(
+            file_dir = (self.folder_directory + "Check_in_out_images/{}/{}/{}/{}{}".format(
                 Pod_ID, Date, Time_Period, file_name, format))
             self.send_img_file_name(file_name)
             sleep(0.5)
@@ -250,38 +252,37 @@ class MainWindow():
 
     def on_message(self, client, userdata, message):
 
-        if message.topic == "Qubic/Connect to Qubic":
+        if message.topic == "Qubic/Connect to Qubic/{}".format(self.ID):
             temp_ID = int(message.payload.decode("utf-8"))
             if temp_ID == self.ID:
                 time = str(datetime.now())[:-7]
-                MQTT_TOPIC = "Qubic/Connection State"
+                MQTT_TOPIC = "Qubic/Connection State/{}".format(self.ID)
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Get connection request from client...\n".format(time))
                 self.log_box.config(state="disabled")
                 self.client.publish(MQTT_TOPIC, self.ID)
 
-        if message.topic == "Qubic/Get Pod Status":
+        if message.topic == "Qubic/Get Pod Status/{}".format(self.ID):
             if int(message.payload.decode("utf-8")) == 1:
                 time = str(datetime.now())[:-7]
-                MQTT_TOPIC = "Qubic/Pod Status"
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Get pod status request from client...\n".format(time))
                 self.log_box.config(state="disabled")
                 self.send_pod_status()
 
-        if message.topic == "Qubic/Get Image":
+        if message.topic == "Qubic/Get Image/{}".format(self.ID):
             if int(message.payload.decode("utf-8")) == 1:
                 time = str(datetime.now())[:-7]
-                MQTT_TOPIC = "Qubic/Requested Images"
+                MQTT_TOPIC = "Qubic/Requested Images/{}".format(self.ID)
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Get pod image request from client...\n".format(time))
                 self.log_box.config(state="disabled")
                 self.capture_image(MQTT_TOPIC)
 
-        if message.topic == "Qubic/Get Difference":
+        if message.topic == "Qubic/Get Difference/{}".format(self.ID):
             if message.payload.decode("utf-8") != "":
                 time = str(datetime.now())[:-7]
-                MQTT_TOPIC = "Qubic/Differences"
+                MQTT_TOPIC = "Qubic/Differences/{}".format(self.ID)
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Get database comparison request from client...\n".format(time))
                 self.log_box.config(state="disabled")
@@ -296,7 +297,7 @@ class MainWindow():
                 self.log_box.config(state="disabled")
             else:
                 time = str(datetime.now())[:-7]
-                MQTT_TOPIC = "Qubic/Differences"
+                MQTT_TOPIC = "Qubic/Differences/{}".format(self.ID)
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Get database comparison request from client...\n".format(time))
                 self.log_box.config(state="disabled")
@@ -310,10 +311,10 @@ class MainWindow():
                 self.log_box.insert("end", "{} - Database comparison result has been sent to client...\n".format(time))
                 self.log_box.config(state="disabled")
 
-        if message.topic == "Qubic/Get Un-sent Images":
+        if message.topic == "Qubic/Get Un-sent Images/{}".format(self.ID):
             if int(message.payload.decode("utf-8")) == 1:
                 time = str(datetime.now())[:-7]
-                MQTT_TOPIC = "Qubic/Sync Database"
+                MQTT_TOPIC = "Qubic/Sync Database/{}".format(self.ID)
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Get database sync request from client...\n".format(time))
                 self.log_box.config(state="disabled")
@@ -345,7 +346,7 @@ class MainWindow():
         self.log_box.config(state="disabled")
 
     def send_img_file_name(self, filename):
-        MQTT_PATH = "Qubic/File Names"
+        MQTT_PATH = "Qubic/File Names/{}".format(self.ID)
         self.client.publish(MQTT_PATH, filename)
 
     def save_local_image(self):
@@ -368,9 +369,7 @@ class MainWindow():
         self.send_img_file_name(self.file_name)
 
         format = ".jpg"
-        path = r"C:\Users\zzh84\OneDrive\Documents\GitHub\Booqed\Check_in_out_images\{}\{}\{}".format(self.ID,
-                                                                                                      date_folder,
-                                                                                                      time_period)
+        path = self.folder_directory + "Check_in_out_images/{}/{}/{}".format(self.ID, date_folder, time_period)
         # Data Log
         img_log_file = open(self.img_log_file_name, "a")
         img_log_file.write("{}|{}|{}|{}\n".format(self.ID, date_folder, time_period, self.file_name))
@@ -379,9 +378,7 @@ class MainWindow():
         if not os.path.exists(path):
             os.makedirs(path)
 
-        directory = "C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/Check_in_out_images/{}/{}/{}/".format(self.ID,
-                                                                                                           date_folder,
-                                                                                                           time_period)
+        directory = self.folder_directory + "Check_in_out_images/{}/{}/{}/".format(self.ID, date_folder, time_period)
         cv2.imwrite(directory + self.file_name + format, self.real_frame)
 
         self.log_box.config(state="normal")
@@ -413,9 +410,8 @@ class MainWindow():
         self.send_img_file_name(self.file_name)
 
         format = ".jpg"
-        path = r"C:\Users\zzh84\OneDrive\Documents\GitHub\Booqed\Check_in_out_images\{}\{}\{}".format(self.ID,
-                                                                                                     date_folder,
-                                                                                                     time_period)
+        path = self.folder_directory + "Check_in_out_images/{}/{}/{}".format(self.ID,date_folder, time_period)
+
         # Data Log
         img_log_file = open(self.img_log_file_name, "a")
         img_log_file.write("{}|{}|{}|{}\n".format(self.ID, date_folder, time_period, self.file_name))
@@ -424,7 +420,7 @@ class MainWindow():
         if not os.path.exists(path):
             os.makedirs(path)
 
-        directory = "C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/Check_in_out_images/{}/{}/{}/".format(self.ID, date_folder, time_period)
+        directory = self.folder_directory + "Check_in_out_images/{}/{}/{}/".format(self.ID, date_folder, time_period)
         cv2.imwrite(directory + self.file_name + format, self.real_frame)
 
 
