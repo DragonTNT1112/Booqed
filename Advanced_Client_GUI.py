@@ -42,11 +42,14 @@ class MainWindow():
         self.set_up_window(window)
 
     def connect_to_pod(self):
+        self.client.disconnect()
+        self.client.loop_stop()
 
         time = str(datetime.now())[:-7]
         if len(self.ID_Input.get("1.0", "end-1c")) != 0:
             try:
                 self.temp_ID = int(self.ID_Input.get("1.0", "end-1c"))
+                print(self.temp_ID)
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Trying to connect to Pod ({})...\n".format(time, self.temp_ID))
                 self.log_box.config(state="disabled")
