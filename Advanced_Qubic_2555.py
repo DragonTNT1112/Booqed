@@ -558,6 +558,7 @@ class MainWindow():
     def set_up_window(self, window):
 
         window.title("Qubic {}".format(self.ID))
+        window.iconbitmap("sources/icon.ico")
         # window.geometry("{}x{}".format(window_width, window_height))
 
         # Menu for the navigation

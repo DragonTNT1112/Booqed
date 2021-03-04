@@ -11,17 +11,6 @@ class MainWindow():
         self.folder_directory = "C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/"
 
         self.mqttBroker = "test.mosquitto.org"
-        # self.topic_list = ["Qubic/Connect to Qubic",
-        #                    "Qubic/Connection State",
-        #                    "Qubic/Get Pod Status",
-        #                    "Qubic/Pod Status",
-        #                    "Qubic/Get Image",
-        #                    "Qubic/File Names",
-        #                    "Qubic/Requested Images",
-        #                    "Qubic/Get Difference",
-        #                    "Qubic/Differences",
-        #                    "Qubic/Get Un-sent Images",
-        #                    "Qubic/Sync Database"]
 
         self.client = mqtt.Client("Client_Message")
         self.all_client_status = False
@@ -49,7 +38,6 @@ class MainWindow():
         if len(self.ID_Input.get("1.0", "end-1c")) != 0:
             try:
                 self.temp_ID = int(self.ID_Input.get("1.0", "end-1c"))
-                print(self.temp_ID)
                 self.log_box.config(state="normal")
                 self.log_box.insert("end", "{} - Trying to connect to Pod ({})...\n".format(time, self.temp_ID))
                 self.log_box.config(state="disabled")
@@ -295,6 +283,7 @@ class MainWindow():
     def set_up_window(self, window):
 
         window.title("Qubic Monitoring Client")
+        window.iconbitmap("sources/icon.ico")
         # window.geometry("{}x{}".format(window_width, window_height))
 
         # Menu for the navigation

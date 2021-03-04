@@ -47,7 +47,7 @@ class MainWindow():
                            "Qubic/Sync Database/{}".format(Pod_ID)]
 
         self.file_name = ""
-        self.img_log_file_name = "Pod({}) - Posted_Images.txt".format(Pod_ID)
+        self.img_log_file_name = "Pod({}) - Captured_Images.txt".format(Pod_ID)
         self.received_log_file_name = "Received_Log.txt"
 
         self.differences = []
@@ -558,6 +558,7 @@ class MainWindow():
     def set_up_window(self, window):
 
         window.title("Qubic {}".format(self.ID))
+        window.iconbitmap("sources/icon.ico")
         # window.geometry("{}x{}".format(window_width, window_height))
 
         # Menu for the navigation
