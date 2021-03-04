@@ -280,7 +280,7 @@ class MainWindow():
                 self.capture_image(MQTT_TOPIC)
 
         if message.topic == "Qubic/Get Difference/{}".format(self.ID):
-            if message.payload.decode("utf-8") != "":
+            if message.payload.decode("utf-8") != "\n":
                 time = str(datetime.now())[:-7]
                 MQTT_TOPIC = "Qubic/Differences/{}".format(self.ID)
                 self.log_box.config(state="normal")

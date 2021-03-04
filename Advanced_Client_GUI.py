@@ -276,6 +276,11 @@ class MainWindow():
         self.Obj.config(text="Not Connected", fg='black')
         self.Mot.config(text="Not Connected", fg='black')
 
+        self.get_img.config(state="disabled")
+        self.get_status.config(state="disabled")
+        self.get_calibrate_data.config(state="disabled")
+        self.calibrate.config(state="disabled")
+
         self.connect_pod.config(state="normal")
         self.ID_Input.delete("1.0", "end")
         self.ID_Input.config(state="normal")
