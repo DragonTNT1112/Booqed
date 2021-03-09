@@ -8,20 +8,20 @@ class MainWindow():
     def __init__(self, window):
         self.window = window
 
-        self.folder_directory = "C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/"
+        self.folder_directory = "C:/Users/zzh84/OneDrive/Documents/GitHub/Booqed/" # Directory to save received imgs
 
-        self.mqttBroker = "test.mosquitto.org"
+        self.mqttBroker = "test.mosquitto.org" # mqtt broker address
 
         self.client = mqtt.Client("Client_Message")
-        self.all_client_status = False
 
-        self.file_name = ""
+        self.file_name = "" # received imgs' file name (to keep consistency of name)
 
-        self.ID = "Not Connected"
-        self.Pod_Status = "Not Connected"
-        self.Obj_Status = "Not Connected"
-        self.Mot_Status = "Not Connected"
+        self.ID = "Not Connected"               # Pod ID
+        self.Pod_Status = "Not Connected"       # Received Pod's status
+        self.Obj_Status = "Not Connected"       # Received Pod's object detection result
+        self.Mot_Status = "Not Connected"       # Received Pod's motion detection result
 
+        # Pre-define the text and color in UI
         self.Obj_txt = None
         self.Mot_txt = None
         self.Obj_txt_color = "black"
@@ -30,6 +30,7 @@ class MainWindow():
         # Create canvas for image
         self.set_up_window(window)
 
+    # Callback function when the "Connect to Pod" button has been pressed
     def connect_to_pod(self):
         self.client.disconnect()
         self.client.loop_stop()
@@ -73,6 +74,7 @@ class MainWindow():
             self.log_box.insert("end", "{} - Enter the Pod ID first...\n".format(time, self.ID))
             self.log_box.config(state="disabled")
 
+    # Callback function when the "Get Pod Status" button has been pressed
     def get_qubic_status(self):
         time = str(datetime.now())[:-7]
         MQTT_TOPIC = "Qubic/Get Pod Status/{}".format(self.ID)
@@ -81,6 +83,7 @@ class MainWindow():
         self.log_box.insert("end", "{} - Pod's status request has been sent to Pod ({})\n".format(time, self.ID))
         self.log_box.config(state="disabled")
 
+    # Callback function when the "Get Captured Image" button has been pressed
     def get_capture_image(self):
         time = str(datetime.now())[:-7]
         MQTT_TOPIC = "Qubic/Get Image/{}".format(self.ID)
@@ -89,6 +92,7 @@ class MainWindow():
         self.log_box.insert("end", "{} - Pod's image request has been sent to Pod ({})\n".format(time, self.ID))
         self.log_box.config(state="disabled")
 
+    # Function to convert received .txt file to byte array
     def get_decode_text(self):
         try:
             with open("Pod({}) - Received_Images.txt".format(self.ID), 'r') as f:
@@ -102,6 +106,7 @@ class MainWindow():
         except:
             self.encode_content = ""
 
+    # Callback function when the "Get Data Differences" button has been pressed
     def get_differences(self):
         time = str(datetime.now())[:-7]
         MQTT_TOPIC = "Qubic/Get Difference/{}".format(self.ID)
@@ -111,6 +116,7 @@ class MainWindow():
         self.log_box.insert("end", "{} - Database comparison request has been sent to Pod ({})\n".format(time, self.ID))
         self.log_box.config(state="disabled")
 
+    # Callback function when the "Re-send Data" button has been pressed
     def get_resent_data(self):
         time = str(datetime.now())[:-7]
         MQTT_TOPIC = "Qubic/Get Un-sent Images/{}".format(self.ID)
@@ -119,6 +125,7 @@ class MainWindow():
         self.log_box.insert("end", "{} - Database sync request has been sent to Pod ({})\n".format(time, self.ID))
         self.log_box.config(state="disabled")
 
+    # Function to insert image log to .txt file
     def create_img_log(self):
         try:
             img_log_file = open("Pod({}) - Received_Images.txt".format(self.ID), "x")
@@ -126,7 +133,10 @@ class MainWindow():
         except:
             pass
 
+    # Mqtt on_message function, based on different sub topic to perform different functions
     def on_message(self, client, userdata, message):
+
+        # When the connection message received from Pod
         if message.topic == "Qubic/Connection State/{}".format(self.temp_ID):
             if message != None:
                 time = str(datetime.now())[:-7]
@@ -144,6 +154,7 @@ class MainWindow():
 
                 self.create_img_log()
 
+        # When the Pod's Status message received from Pod
         if message.topic == "Qubic/Pod Status/{}".format(self.ID):
             message_list = str(message.payload.decode("utf-8")).split("|")
             self.ID = message_list[0]
@@ -180,9 +191,11 @@ class MainWindow():
                                                                                          self.ID))
             self.log_box.config(state="disabled")
 
+        # When the img's file name message received from Pod
         if message.topic == "Qubic/File Names/{}".format(self.ID):
             self.file_name = str(message.payload.decode("utf-8"))
 
+        # When the requested img message received from Pod
         if message.topic == "Qubic/Requested Images/{}".format(self.ID):
             # more callbacks, etc
             # Create a file with write byte permission
@@ -227,6 +240,7 @@ class MainWindow():
             img_log_file.write("{}|{}|{}|{}\n".format(self.ID, date_folder, time_period, self.file_name))
             img_log_file.close()
 
+        # When the data difference message received from Pod
         if message.topic == "Qubic/Differences/{}".format(self.ID):
             time = str(datetime.now())[:-7]
             difference = int(message.payload.decode("utf-8"))
@@ -244,6 +258,7 @@ class MainWindow():
 
                 self.calibrate.config(state="normal")
 
+        # When the different data have been re-sent successfully message received from Pod
         if message.topic == "Qubic/Sync Database/{}".format(self.ID):
             time = str(datetime.now())[:-7]
             result = int(message.payload.decode("utf-8"))
@@ -254,19 +269,18 @@ class MainWindow():
 
                 self.calibrate.config(state="disabled")
 
-
+    # MQTT on_connect function to sub all the required topics from broker
     def on_connect(self, client, userdata, flags, rc):
         for i in self.topic_list:
             client.subscribe(i)
 
+    # Callback funtion when the "Connect to MQTT broker" button has been pressed in the drop-down
+    # menu
     def Start_MQTT(self):
         self.log_box.config(state="normal")
         self.log_box.delete("1.0", "end")
         time = str(datetime.now())[:-7]
         self.log_box.insert("end", "{} - Creating new client instance...\n".format(time))
-
-        # self.client.on_connect = self.on_connect
-        # self.client.on_message = self.on_message
 
         self.log_box.insert("end", "{} - Connected to MQTT broker...\n".format(time).format(time))
         self.log_box.config(state="disabled")
@@ -285,11 +299,11 @@ class MainWindow():
         self.ID_Input.delete("1.0", "end")
         self.ID_Input.config(state="normal")
 
+    # Function to create all the GUI elements in the client application
     def set_up_window(self, window):
 
         window.title("Qubic Monitoring Client")
         window.iconbitmap("sources/icon.ico")
-        # window.geometry("{}x{}".format(window_width, window_height))
 
         # Menu for the navigation
 
