@@ -1,3 +1,5 @@
+############ Get image source from mobile device#########
+
 import tkinter as tk
 from PIL import Image, ImageTk
 import cv2
@@ -10,7 +12,7 @@ from time import *
 
 # Camera's frame dimension
 camera_width = 640
-camera_height = 480
+camera_height = 360
 
 # Frequncy to capture frame (Frame per Second)
 FPS = 60
@@ -71,6 +73,10 @@ class MainWindow():
         self.get_base_image()
         self.update_image()
 
+    def img_resize(self, img):
+        return cv2.resize(img, (camera_width, camera_height))
+
+
     # Function create local img log file when the Pod starts to work
     def create_img_log(self):
         try:
@@ -82,6 +88,7 @@ class MainWindow():
     # Function to get the reference img for the object detection algorithm
     def get_base_image(self):
         self.base_image_unchanged = self.cap.read()[1]
+        self.base_image_unchanged = self.img_resize(self.base_image_unchanged)
         self.base_image = cv2.cvtColor(self.base_image_unchanged, cv2.COLOR_BGR2GRAY)
         self.base_image = cv2.GaussianBlur(self.base_image, (25, 25), 0)
 
@@ -576,11 +583,13 @@ class MainWindow():
     def update_image(self):
         # Get the latest frame and convert image format
         self.real_frame = self.cap.read()[1]
+        self.real_frame = self.img_resize(self.real_frame)
         self.get_current_frame(self.real_frame)
         self.get_object()
         self.get_motion()
         self.check_QR_code()
 
+        # self.real_frame = cv2.rotate(self.real_frame, cv2.ROTATE_90_CLOCKWISE)
         self.tk_img = self.convert2tk(self.real_frame)
 
         # Update Pod
@@ -593,7 +602,7 @@ class MainWindow():
         self.canvas_ori.create_image(0, 0, anchor=tk.NW, image=self.tk_img)
 
         # Repeat every 'interval' ms
-        self.window.after(self.interval, self.update_image)
+        self.window.after(1, self.update_image)
 
     # Function to create all the GUI elements in the Pod application
     def set_up_window(self, window):
@@ -659,5 +668,6 @@ class MainWindow():
 
 if __name__ == "__main__":
     root = tk.Tk()
-    main_window = MainWindow(root, cv2.VideoCapture(0), 3667)
+    URL = "http://192.168.1.17:8080/video"
+    main_window = MainWindow(root, cv2.VideoCapture(URL), 1115)
     root.mainloop()
