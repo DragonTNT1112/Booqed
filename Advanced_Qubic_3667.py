@@ -1,6 +1,7 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 import cv2
+from pyzbar.pyzbar import decode
 import numpy as np
 import paho.mqtt.client as mqtt
 from datetime import datetime
@@ -407,6 +408,35 @@ class MainWindow():
             self.log_box.config(state="disabled")
             self.check_out.config(state="normal")
 
+    # Function to detect QR code to initialize the check-in process
+    def check_QR_code(self):
+        gray = cv2.cvtColor(self.real_frame, cv2.COLOR_BGR2GRAY)
+        try:
+            qr_info_list = decode(gray)
+            for code in qr_info_list:
+                qr_info = code.data.decode('utf-8')
+                try:
+                    qr_ID = int(qr_info.split("_")[0])
+                    start_time = qr_info.split("-")[1]
+                    end_time = qr_info.split("-")[1]
+                    if qr_ID == self.ID and self.in_switch == False:
+                        self.CheckInCallBack()
+                except:
+                    pass
+
+                # print(code.data.decode('utf-8'))
+                # pts = []
+                # for i in range(len(code.polygon)):
+                #     pts.append([code.polygon[i][0], code.polygon[i][1]])
+                # pts = np.array(pts, np.int32)
+                # pts = pts.reshape((-1, 1, 2))
+                # cv2.rectangle(self.real_frame, (code.rect[0], code.rect[1]),
+                #               (code.rect[0] + code.rect[2], code.rect[1] + code.rect[3]),
+                #               (255, 0, 0), 2)
+                # cv2.polylines(self.real_frame, [pts], True, (0, 0, 255), 2)
+        except:
+            pass
+
     # Callback function when the connect button is pressed in the drop-down menu
     # to connect to MQTT broker
     def Connect2Mqtt(self):
@@ -554,6 +584,7 @@ class MainWindow():
         self.get_current_frame(self.real_frame)
         self.get_object()
         self.get_motion()
+        self.check_QR_code()
 
         self.tk_img = self.convert2tk(self.real_frame)
         self.tk_unchange_img = self.convert2tk(unchange_img)
